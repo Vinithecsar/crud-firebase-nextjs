@@ -3,6 +3,8 @@ import ClienteRepositorio from "@/core/ClienteRepositorio";
 import { useEffect, useState } from "react";
 import ColecaoCliente from "@/backend/db/ColecaoCliente";
 import useTabelaOuForm from "./useTabelaOuForm";
+import { collection, doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/backend/config";
 
 export default function useClientes() {
   const repo: ClienteRepositorio = new ColecaoCliente();
@@ -12,14 +14,14 @@ export default function useClientes() {
   const [cliente, setCliente] = useState<Cliente>(Cliente.vazio());
   const [clientes, setClientes] = useState<Cliente[]>([]);
 
-  useEffect(obterTodos, []);
+  //useEffect(obterTodos, []);
 
-  function obterTodos() {
-    repo.obterTodos().then((clientes) => {
-      setClientes(clientes);
-      exibirTabela();
-    });
-  }
+  // function obterTodos() {
+  //   repo.obterTodos().then((clientes) => {
+  //     setClientes(clientes);
+  //     exibirTabela();
+  //   });
+  // }
 
   function selecionarCliente(cliente: Cliente) {
     setCliente(cliente);
@@ -28,7 +30,8 @@ export default function useClientes() {
 
   async function excluirCliente(cliente: Cliente) {
     await repo.excluir(cliente);
-    obterTodos();
+    //obterTodos();
+    exibirTabela();
   }
   function novoCliente() {
     setCliente(Cliente.vazio());
@@ -37,8 +40,21 @@ export default function useClientes() {
 
   async function salvarCliente(cliente: Cliente) {
     await repo.salvar(cliente);
-    obterTodos();
+    //obterTodos();
+    exibirTabela();
   }
+
+  onSnapshot(collection(db, "clientes"), (snapshot) => {
+    const clientes: Cliente[] = [];
+    snapshot.docs.map((doc) =>
+      clientes.push(new Cliente(doc.data().nome, doc.data().idade, doc.id)),
+    );
+    setClientes(clientes);
+  });
+
+  // onSnapshot(queryPedidos, snapshot => {
+  //   setArrayTodosPedidos(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+  // });
 
   return {
     tabelaVisivel,
@@ -49,6 +65,6 @@ export default function useClientes() {
     novoCliente,
     excluirCliente,
     selecionarCliente,
-    obterTodos,
+    //obterTodos,
   };
 }
